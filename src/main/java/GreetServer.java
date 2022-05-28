@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class GreetServer {
+public class GreetServer implements AutoCloseable {
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;
@@ -19,20 +19,32 @@ public class GreetServer {
         String greeting = in.readLine();
         if ("hello server".equals(greeting)) {
             out.println("hello client");
-        }
-        else {
+        } else {
             out.println("unrecognised greeting");
         }
     }
 
-    public void stop() throws IOException {
+    public void close() throws IOException {
         in.close();
         out.close();
         clientSocket.close();
         serverSocket.close();
     }
+
     public static void main(String[] args) throws IOException {
-        GreetServer server=new GreetServer();
-        server.start(6666);
+        while (true) {
+            try (GreetServer server = new GreetServer()) {
+                try {
+                    server.start(6666);
+                } catch (IOException e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+            try {
+                Thread.sleep(3000L);
+            } catch (InterruptedException e) {
+                System.err.println(e.getMessage());
+            }
+        }
     }
 }
